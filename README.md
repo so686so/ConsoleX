@@ -2,6 +2,12 @@
 
 ---
 
+## Functions
+
+- Set RGB color on console, like "#00FF80"
+- Get keystroke direct ( Includes ENTER, ESC, TAB, and F1 to F12 keys )
+- Set / Get Coordination on console
+
 ## How to compile
 
 ```shell
