@@ -48,4 +48,10 @@ namespace cx // ConsoleX main namespace
         catch( ... ) { return 0; }
     }
 
+    std::ostream& ResetColor( std::ostream& _os ) noexcept
+    {
+        cx::ResetColor();
+        return _os;
+    }
+
 } // nsp::cx

@@ -4,14 +4,10 @@
 // STL::C++
 #include <string>      // std::string
 #include <iostream>    // for 'std::cout <<' overloading
-#include <type_traits> // is_same_v
+#include <type_traits> // is_same
 
 namespace cx // ConsoleX main namespace
 {
-    // const value :: Error & Reset color hex string
-    constexpr const char* INVALLID_RGB_HEX = "INVALID_RGB";
-    constexpr const char* RESET_COLOR_TYPE = "RESET_COLOR";
-
     // Enum class about default rgb hex color codes
     enum class RGB {
         BLACK,   // #000000
@@ -31,14 +27,19 @@ namespace cx // ConsoleX main namespace
         MAGENTA, // #FF00FF
         PURPLE,  // #800080
         RESET,   // Special RGB type for reset
+        NONE,    // Invalid color type
     };
 
+    constexpr bool FG = true;  // foreground(font)
+    constexpr bool BG = false; // background(back)
+
     // R, G, B individual value expression of RGB hex value
-    typedef struct _rgb_v_ {
-        unsigned int r = 0;
-        unsigned int g = 0;
-        unsigned int b = 0;
-    } rgb_value;
+    using rgb_value = unsigned short;
+    typedef struct _rgb_s_ {
+        rgb_value r = 0;
+        rgb_value g = 0;
+        rgb_value b = 0;
+    } rgb_set;
 
     // Set foreground color - Used separately from std::cout
     template <typename T>
@@ -51,9 +52,6 @@ namespace cx // ConsoleX main namespace
     // Reset color - Used separately from std::cout
     void ResetColor( void ) noexcept;
 
-    // Reset color - Use with std::cout
-    std::ostream& ResetColor( std::ostream& _os ) noexcept;
-
     /**
      * @brief
      *    ConsoleX color class
@@ -65,18 +63,19 @@ namespace cx // ConsoleX main namespace
     class Color {
     public:
         // Constructors
-        Color( void ) = delete; // color class must have color value
-        Color( const std::string& hex );
-        Color( const cx::rgb_value& rgb );
-        Color( const cx::RGB rgb = cx::RGB::RESET );
+        Color( void ) = delete; // cx::Color class must have real color value
+        Color( const std::string& hex, const bool is_fg = true );
+        Color( const cx::rgb_set& rgb, const bool is_fg = true );
+        Color( const cx::Color& color, const bool is_fg = true );
+        Color( const cx::RGB rgb = cx::RGB::RESET, const bool is_fg = true );
 
         // Destructor
-        ~Color() = default;
+        virtual ~Color() = default;
 
-        // getter
-        cx::rgb_value rgb( void ) const noexcept;
-        std::string   hex( void ) const noexcept;
-        std::string   str( void ) const noexcept { return this->hex(); };
+        // Getter
+        cx::rgb_set rgb( void ) const noexcept;
+        std::string hex( void ) const noexcept;
+        std::string str( void ) const noexcept { return this->hex(); };
 
         // is
         bool is_font_color( void ) const noexcept { return  this->_is_fg; };
@@ -85,13 +84,16 @@ namespace cx // ConsoleX main namespace
         // check current cx::Color instance is valid
         operator bool() const { return this->_is_valid; };
 
-        // compare operator
+        // Compare operator
         bool operator==( const cx::Color& other ) const;
         bool operator!=( const cx::Color& other ) const;
 
         // std::cout << overloading
         friend std::ostream& operator<< ( std::ostream& os, const cx::Color& color ) {
-            cx::SetFontColor( color.hex() );
+            if( color.is_font_color() )
+                cx::SetFontColor( color );
+            else
+                cx::SetBackColor( color );
             return os;
         }
 
@@ -99,32 +101,81 @@ namespace cx // ConsoleX main namespace
         cx::Color& operator=( const cx::Color& other );
 
     protected:
-        bool _is_fg = true; // is foreground(font) color
+        bool _is_fg = true;    // is foreground(font) color
 
     private:
-        bool          _is_valid; // is valid color instance
-        std::string   _hex; // hex string
-        cx::rgb_value _rgb; // rgb values
-    };
+        bool        _is_valid; // is valid color instance
+        std::string _hex;      // hex string
+        cx::rgb_set _rgb;      // rgb values
 
-    // Check Reset Color Type
-    bool IsResetColorType( const cx::Color& color ) noexcept;
+    }; // cls::Color
+    
+    // typedef for type check
+    typedef char HEX_RGB_CHAR[8];
+
+    template <typename T>
+    cx::Color FontColor( const T& value ) noexcept
+    {
+        if constexpr ( std::is_same<T, cx::RGB>::value ) {
+            return cx::Color { value, true };
+        }
+        else if constexpr ( std::is_same<T, std::string>::value ) {
+            return cx::Color { value, true };
+        }
+        else if constexpr ( std::is_same<T, HEX_RGB_CHAR>::value ) {
+            return cx::Color { std::string{ value }, true };
+        }
+        else if constexpr ( std::is_same<T, cx::Color>::value ) {
+            return cx::Color { value, true };
+        }
+        return cx::Color { cx::RGB::NONE, true };
+    }
+
+    template <typename T>
+    cx::Color BackColor( const T& value ) noexcept
+    {
+        if constexpr ( std::is_same<T, cx::RGB>::value ) {
+            return cx::Color { value, false };
+        }
+        else if constexpr ( std::is_same<T, std::string>::value ) {
+            return cx::Color { value, false };
+        }
+        else if constexpr ( std::is_same<T, HEX_RGB_CHAR>::value ) {
+            return cx::Color { std::string{ value }, false };
+        }
+        else if constexpr ( std::is_same<T, cx::Color>::value ) {
+            return cx::Color { value, false };
+        }
+        return cx::Color { cx::RGB::NONE, false };
+    }
 
     template <typename T>
     inline bool SetColor( const T& value, const bool is_foregournd = true ) noexcept
     {
-        if constexpr ( std::is_same_v<T, cx::RGB> || std::is_same_v<T, std::string> ) {
+        if constexpr ( std::is_same<T, cx::RGB>::value ) {
             return SetColor( cx::Color { value }, is_foregournd );
+        }
+        else if constexpr ( std::is_same<T, std::string>::value ) {
+            return SetColor( cx::Color { value }, is_foregournd );
+        }
+        else if constexpr ( std::is_same<T, HEX_RGB_CHAR>::value ) {
+            return SetColor( std::string { value }, is_foregournd );
+        }
+        else if constexpr ( std::is_same<T, cx::Color>::value ) {
+            return SetColor( value, is_foregournd );
         }
         return false;
     }
+
+    // Check Reset Color Type
+    bool IsResetColorType( const cx::Color& color ) noexcept;
 
     template <>
     inline bool SetColor<cx::Color>( const cx::Color& color, const bool is_foregournd ) noexcept
     {
         if( !color ) return false;
 
-        if( IsResetColorType( color ) ) {
+        if( cx::IsResetColorType( color ) ) {
             cx::ResetColor();
             return true;
         }
@@ -148,17 +199,6 @@ namespace cx // ConsoleX main namespace
     {
         return cx::SetColor( value, false );
     }
-
-
-    // class FontColor final : public cx::Color
-    // {
-
-    // };
-
-    // class BackColor final : public cx::Color
-    // {
-
-    // };
 
 } // nsp::cx
 
