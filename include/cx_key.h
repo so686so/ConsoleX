@@ -1,5 +1,5 @@
-#ifndef _DIRECT_KEY_H_
-#define _DIRECT_KEY_H_
+#ifndef _CONSOLE_X_KEY_H_
+#define _CONSOLE_X_KEY_H_
 
 /**
  * Linux Direct Keystroke functions
