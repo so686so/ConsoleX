@@ -239,6 +239,11 @@ namespace cx // ConsoleX main namespace
         {
             return cx::Color { value, true };
         }
+        // value 의 타입이 cx::rgb_set 일 때
+        else if constexpr ( std::is_same<T, cx::rgb_set>::value )
+        {
+            return cx::Color { value, true };
+        }
         // value 의 타입이 std::string 일 때
         else if constexpr ( std::is_same<T, std::string>::value )
         {
@@ -266,6 +271,11 @@ namespace cx // ConsoleX main namespace
         {
             return cx::Color { value, false };
         }
+        // value 의 타입이 cx::rgb_set 일 때
+        else if constexpr ( std::is_same<T, cx::rgb_set>::value )
+        {
+            return cx::Color { value, true };
+        }
         // value 의 타입이 std::string 일 때
         else if constexpr ( std::is_same<T, std::string>::value )
         {
@@ -291,9 +301,13 @@ namespace cx // ConsoleX main namespace
     {
         // STEP 1 :
         //    cx::Color 객체가 아니지만 cx::Color 객체를 생성할 수 있는 값이
-        //    들어온다면, 위의 세 경우 조건문을 통해 cx::Color 생성 과정 후
+        //    들어온다면, 위의 네 경우 조건문을 통해 cx::Color 생성 과정 후
         //    else if ( std::is_same<T, cx::Color>::value ) 조건 부분으로 진입.
         if constexpr ( std::is_same<T, cx::RGB>::value )
+        {
+            return _SetColor( cx::Color { value }, is_foregournd );
+        }
+        else if constexpr ( std::is_same<T, cx::rgb_set>::value )
         {
             return _SetColor( cx::Color { value }, is_foregournd );
         }
