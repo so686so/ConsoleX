@@ -2,7 +2,7 @@
 SRCDIR   := $(CURDIR)/src
 INCDIR   := $(CURDIR)/include
 BUILDDIR := $(CURDIR)/build
-DATADIR  := $(CURDIR)/data
+#DATADIR  := $(CURDIR)/data
 
 # Compiler
 CC      := g++
@@ -15,7 +15,7 @@ LDFLAGS :=
 SOURCES    := $(wildcard $(SRCDIR)/*.cpp)
 OBJECTS    := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.cpp=.o))
 EXECUTABLE := runfile
-DATA       := $(wildcard $(DATADIR)/*)
+#DATA       := $(wildcard $(DATADIR)/*)
 
 # Build directory creation
 $(shell mkdir -p $(BUILDDIR))
@@ -29,10 +29,10 @@ $(BUILDDIR)/%.o: $(SRCDIR)/%.cpp
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 # Phony targets
-.PHONY: clean data
+.PHONY: clean #data
 
 clean:
 	rm -f $(BUILDDIR)/*.o $(BUILDDIR)/$(EXECUTABLE)
 
-data:
-	cp -r $(DATADIR) $(BUILDDIR)/
+#data:
+#	cp -r $(DATADIR) $(BUILDDIR)/
