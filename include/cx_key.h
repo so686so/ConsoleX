@@ -2,7 +2,7 @@
 #define _CONSOLE_X_KEY_H_
 
 /**
- * Linux Direct Keystroke functions
+ * Linux 즉시 키입력 코드
  */
 
 // STL :: C
@@ -86,57 +86,75 @@ namespace cx // ConsoleX main namespace
 
     class Key
     {
-    // Main key stroke read functions ----------------------------------------------------------------------------------------
+    // 주요 키 입력 read 함수들 ----------------------------------------------------------------------------------------
     public:
         /**
-         * @brief  Reading key values synchronously.
-         * @note   This function waits until you stroke a key
-         * @return Pressed key value converted to KeyBoard enum value
+         * @brief  동기적으로 키 값을 읽는 함수.
+         * @note   해당 함수는 키 입력이 발생할 때까지 대기.
+         * @return 누른 키 값이 cx::KeyBoard enum 값으로 변환되어 반환.
+         *         대기 중 cx::Key::ForceStopGetKey() 실행 시, cx::KeyBoard::FORCE_INTERRUPT 반환.
          */
         static KeyBoard GetKey( void ) noexcept;
 
         /**
-         * @brief  Reading key values synchronously until timeout (millisec)
-         * @note   This function waits for a timeout or until you stroke a key
-         * @param  timeout_milsec If value >= 0, a one-time timeout waits for the value in millisec when the function operates.
-         * @return Pressed key value converted to KeyBoard enum value, or 'KeyBoard::NONE_INPUT' if not pressed until timeout.
-         *         If another keystroke waiting function is already in progress, it returns 'KeyBoard::ALREADY_OCCUPIED'.
+         * @brief  동기적으로 키 값을 읽다가 설정한 시간(milsec) 초과시 timeout 하는 함수.
+         * @note   해당 함수는 타임아웃 까지의 기간 동안 키 입력을 대기.
+         *         키 입력 이벤트 발생시 timeout 시간 이내여도 즉시 반환.
+         * @param  timeout_milsec
+         *         해당 값이 0 이상이라면, 해당 함수가 동작하는 단 한 번만 해당 milliseconds 만큼
+         *         timeout wait를 실행하며 키입력을 대기함.
+         * @return 키입력이 발생했다면 누른 키 값이 cx::KeyBoard enum 값으로 변환되어 반환.
+         *         만약 timeout 시간까지 키입력이 없었다면 'cx::KeyBoard::NONE_INPUT' 반환.
+         *         만약 대기 시간 동안 다른 키입력 함수를 실행 시, 'cx::KeyBoard::ALREADY_OCCUPIED' 반환.
          */
         static KeyBoard GetKeyTimeout( const int timeout_milsec = -1 ) noexcept;
 
-    // Set flag or config functions ------------------------------------------------------------------------------------------
+    // Flag 혹은 config 세팅 함수들 ------------------------------------------------------------------------------------------
     public:
         /**
-         * @brief  Function to set timeout milliseconds to wait for key input synchronously
-         * @param  timeout_milsec If value >= 0, set the value as the default synchronous key input waiting timeout value.
-         * @return True if the change was applied, false if the change failed cuz other code was already waiting for key input.
+         * @brief  GetKeyTimeout() 함수 실행 시 기다리는 기본 timeout milliseconds 설정하는 함수
+         * @param  timeout_milsec
+         *         해당 값이 0 이상이라면, GetKeyTimeout() timeout milliseconds를 해당 값으로 변경 시도.
+         * @return 변경이 성공했다면 true 반환, 다른 코드에서 이미 GetKeyTimeout() 작동 중 등의 이유로
+         *         변경 실패 시 false 반환.
          */
         static bool SetReadKeyAwaitTimeout( const int timeout_milsec ) noexcept;
 
     // Utilities -------------------------------------------------------------------------------------------------------------
     public:
         /**
-         * @brief  A function that attempts to temporarily disable 'immediate key input' and 'cursor hiding'
-         * @return true if the attempt was successful, false if the attempt failed because key input was waiting elsewhere
+         * @brief  임시적으로 '즉시 키 입력'과 '커서 숨김'을 비활성화 시도하는 함수.
+         * @return 비활성화 시도가 성공했다면 true, 다른 코드에서 키입력 대기 등의 이유로 비활성화 실패 시 false 반환.
          */
         static bool TryPause( void ) noexcept;
 
         /**
-         * @brief A function that temporarily force disable 'immediate key input' and 'cursor hiding'
-         * @note  If you are waiting for a key input somewhere else, wait until the task is completed and then force a pause.
+         * @brief 임시적으로 '즉시 키 입력'과 '커서 숨김' 비활성화를 강제로 시행하는 함수.
+         * @note  만약 다른 곳에서 키 입력 대기등을 시행하고 있을 때,
+         *        해당 함수는 비활성화 될 때까지 대기하며 비활성화를 시도함.
          */
         static void ForcePause( void ) noexcept;
 
         /**
-         * @brief Resume 'immediate key input' and 'cursor hiding' functions stopped with TryPause() or ForcePause()
+         * @brief TryPause() or ForcePause() 함수로 비활성화 된 '즉시 키 입력' 과 '커서 숨김'을 다시 활성화.
          */
         static void Resume( void ) noexcept;
 
+        /**
+         * @brief  cx::KeyBoard enum value 값을 Int값으로 변환 시도
+         * @param  key cx::KeyBoard enum 값 중 하나
+         * @return 만약 해당 값이 문자로 '0' ~ '9' 사이의 값일 시, 실제 0 ~ 9 숫자 반환.
+         *         아니라면 -1 반환.
+         */
         static int KeyNumToInt( const KeyBoard key ) noexcept
         {
             return ( key >= NUM_0 && key <= NUM_9 ) ? (int)( key - 48 ) : -1;
         }
 
+        /**
+         * @brief cx::Key::GetKey() 함수를 강제로 중지하는 함수
+         * @note  해당 함수로 cx::Key::GetKey() 중지 시, 대기 코드 부분에서는 cx::KeyBoard::FORCE_INTERRUPT 반환.
+         */
         static void ForceStopGetKey( void )
         {
             GetKeyPtr()->await_force_stop_flg = true;
@@ -145,14 +163,14 @@ namespace cx // ConsoleX main namespace
     // Others ----------------------------------------------------------------------------------------------------------------
     public:
         /**
-         * @brief public destructor for RAII of shared_ptr
+         * @brief shared_ptr 의 RAII 위한 public 소멸자.
          */
         ~Key() { Key::Deinit(); }
 
     // Private methodes ------------------------------------------------------------------------------------------------------
     private:
         /**
-         * @brief private constructor for RAII and singleton
+         * @brief 싱글톤 패턴과 RAII 위한 private 생성자.
          */
         explicit Key()
             : is_key_stroke_direct( false )
@@ -161,30 +179,30 @@ namespace cx // ConsoleX main namespace
         { Key::Init(); }
 
         /**
-         * @brief Key class initialize
+         * @brief Key class 초기화 함수
          */
         void Init( void ) noexcept;
 
         /**
-         * @brief Key class deinitialize
+         * @brief Key class 종료 및 해제 함수
          */
         void Deinit( void ) noexcept;
 
         /**
-         * @brief  Get singleton Key shared_ptr
+         * @brief  cx::Key 의 singleton shared_ptr 를 반환하는 함수
          * @return Singleton pattern DirectKey::Key pointer
          */
         static std::shared_ptr<cx::Key> GetKeyPtr( void ) noexcept;
 
         /**
-         * @brief  Function to change the key input time to when the key is pressed
-         * @return true if the attempt was successful, false if the attempt failed because key input was waiting elsewhere
+         * @brief  키 입력 순간을 엔터 입력 후가 아닌 키를 누를 때로 바꾸는 함수.
+         * @return 해당 변환이 성공한다면 true, 다른 곳에서 키 입력 대기 등으로 변환 실패 시 false.
          */
         bool SetKeyStrokeDirect( void ) noexcept;
 
         /**
-         * @brief  Function to change the key input time to when 'Enter' key pressed
-         * @return true if the attempt was successful, false if the attempt failed because key input was waiting elsewhere
+         * @brief  키 입력 순간을 엔터 입력 후로 바꾸는 함수.
+         * @return 해당 변환이 성공한다면 true, 다른 곳에서 키 입력 대기 등으로 변환 실패 시 false.
          */
         bool SetKeyStrokeWhenPressEnter( void ) noexcept;
 

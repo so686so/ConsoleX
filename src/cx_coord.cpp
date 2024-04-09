@@ -1,6 +1,8 @@
 // ConsoleX
 #include "cx_coord.h"
 #include "cx_console.h" // GetConsoleH, GetConsoleW
+// STL::C++
+#include <string>       // string, to_string
 // STL::C
 #include <stdio.h>      // fflush, printf
 #include <fcntl.h>      // open
@@ -10,6 +12,11 @@
 
 namespace cx // ConsoleX main namespace
 {
+    // 사용할 함수와 클래스를 명확히 특정해 using 사용.
+    // namespace 전체를 using 하는 것은 추천하지 않음.
+    using std::string;
+    using std::to_string;
+
     cx::Coord::Coord( const int _x, const int _y )
         : x( _x )
         , y( _y )
@@ -28,10 +35,15 @@ namespace cx // ConsoleX main namespace
         , v( coord ? true : false )
     {}
 
-    std::string cx::Coord::str( void ) const noexcept
+    string cx::Coord::str( void ) const noexcept
     {
-        std::string coord = "( " + std::to_string( this->x ) + ", " + std::to_string( this->y ) + " )";
-        return coord;
+        // 정상 Coord 객체일 때
+        if( *this ) {
+            string coord = "( " + std::to_string( this->x ) + ", " + std::to_string( this->y ) + " )";
+            return coord;
+        }
+        // ErrorCoord 객체일 때
+        return string { "( INV, INV )" };
     }
 
     bool cx::Coord::operator==( const cx::Coord& other ) const
@@ -73,8 +85,10 @@ namespace cx // ConsoleX main namespace
         return *this;
     }
 
+    // local scope 변수 할당을 위한 이름 없는 namespace
     namespace
     {
+        // 해당 변수는 로컬에서만 사용가능
         constexpr int RD_EOF = -1;
         constexpr int RD_EIO = -2;
     }
@@ -132,7 +146,8 @@ namespace cx // ConsoleX main namespace
     }
 
     /**
-     * Ref : https://www.linuxquestions.org/questions/programming-9/get-cursor-position-in-c-947833/
+     * @ref
+     * https://www.linuxquestions.org/questions/programming-9/get-cursor-position-in-c-947833/
      */
     cx::Coord GetCoord( void ) noexcept
     {
@@ -220,6 +235,7 @@ namespace cx // ConsoleX main namespace
         return cx::Coord{ cx_cols, cx_rows };
     }
 
+    // curr 값을 min ~ max 값 사이로 강제하는 함수
     static inline int coord_clamp( const int min, const int curr, const int max ) noexcept
     {
         return ( curr < min ) ? min : ( ( curr > max ) ? max : curr );

@@ -9,13 +9,13 @@
 
 namespace cx // ConsoleX main namespace
 {
-    // Hide cursor on console
+    // 터미널에서 커서를 감수는 함수
     inline static void _CursorOff( void ) noexcept { printf("\33[?25l"); }
 
-    // Reveal cursor on console
+    // 터미널에서 커서를 다시 보이게 하는 함수
     inline static void _CursorOn ( void ) noexcept { printf("\33[?25h"); }
 
-    // Set terminel non-canonical mode
+    // 터미널을 non-canonical mode로 바꾸는 함수
     static Termios _SetNonCanonicalMode( Termios* origin_attr ) noexcept
     {
         Termios save_attr = *origin_attr; // save attribute origin
@@ -33,17 +33,19 @@ namespace cx // ConsoleX main namespace
     }
 
     /**
-     * Unlike normal ASCII values, the ASCII values of the direction keys are
-     * read as consecutive ASCII values, such as '27 91 65'. At this time,
-     * the second key value of the direction keys is fixed at 91.
+     * 일반 ASCII 값과 달리 방향키의 ASCII 값은 '27 91 65' 와 같이
+     * 연속된 세 개의 ASCII 값으로 읽혀짐. 이때 방향키의 두 번째
+     * 키값은 91로 고정.
      */
     constexpr int ARROW_CHECK_VALUE = 91;
-    constexpr int GENERAL_KEY_INDEX = 0;  // Index of general key values excluding 'arrow' keys or 'ESC' keys
-    constexpr int ARROW_CHECK_INDEX = 1;  // Index of the value to check whether it is an arrow key or an ESC key
-    constexpr int ARROW_VALUE_INDEX = 2;  // Index of the actual key value when the input value is a direction key
+    constexpr int GENERAL_KEY_INDEX = 0;  // 방향키나 'ESC'키를 제외한 일반 키 값의 인덱스
+    constexpr int ARROW_CHECK_INDEX = 1;  // 방향키인지 'ESC'키인지 확인하는 값의 인덱스
+    constexpr int ARROW_VALUE_INDEX = 2;  // 입력값이 방향키일 때 실제 키값의 인덱스
     constexpr int FUNC_KEY_INDEX_01 = 2;
     constexpr int FUNC_KEY_INDEX_02 = 3;
 
+    // FunctionKey(F키) 추출 함수
+    // 해당 함수는 기종 기기별로 값이 다를 수 있음...
     inline static KeyBoard _FkeyCast_( const char v1, const char v2 )
     {
         if      ( v1 == 49 && v2 == 49 ) return KeyBoard::F1;
@@ -61,6 +63,7 @@ namespace cx // ConsoleX main namespace
         return KeyBoard::NONE_INPUT;
     }
 
+    // 키입력 받은 데이터 값을 cx::KeyBoard 값으로 변환하는 함수
     static KeyBoard _VerifyKeyInput( const char* const read_data, const ssize_t byte_len )
     {
         switch( byte_len )
@@ -87,6 +90,7 @@ namespace cx // ConsoleX main namespace
         return target;
     }
 
+    // select 이용해서 키 입력 이벤트 timeout_wait 하는 함수
     static int _OnEvent( const int timeout_milsec ) noexcept
     {
         const int us = ( timeout_milsec > 0 ) ? timeout_milsec * 1000 : 0;
@@ -243,4 +247,5 @@ namespace cx // ConsoleX main namespace
         static std::shared_ptr<cx::Key> singleton( new Key() );
         return singleton;
     }
+
 }; // nsp: cx

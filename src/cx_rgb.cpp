@@ -10,10 +10,12 @@
 
 namespace cx // ConsoleX main namespace
 {
-    // Clearly specify which classes and functions to use
+    // 사용할 함수와 클래스를 명확히 특정해 using 사용.
+    // namespace 전체를 using 하는 것은 추천하지 않음.
     using std::string;
 
-    namespace // nameless namespace for local scope variables
+    // local scope 변수 할당을 위한 이름 없는 namespace
+    namespace
     {
         // const value :: Error & Reset color hex string
         constexpr const char* INVALLID_RGB_HEX = "INVALID_RGB";
@@ -30,6 +32,7 @@ namespace cx // ConsoleX main namespace
         printf("\033[0m");
     }
 
+    // cx::RGB enum value -> Hex Code std::string
     static string _GetHexStringFromHexColor( const cx::RGB clr )
     {
         switch ( clr ) {
@@ -54,25 +57,34 @@ namespace cx // ConsoleX main namespace
         }
     }
 
+    // 주어진 문자열이 HexCode 타입인지 체크
     static inline bool _IsValidColorHexString( const string& hex )
     {
+        // 정규표현식을 이용한 HexCode Check
         if( std::regex_match( hex, std::regex("^#([0-9a-fA-F]{6})$") ) )
             return true;
+        // ResetCode type 또한 return true
         else if( hex == string{ RESET_COLOR_TYPE } )
             return true;
         return false;
     }
 
+    // 주어진 cx::rgb_set 인자들이 유효값인지 체크
     static inline bool _IsValidRgbRange( const cx::rgb_set& rgb )
     {
-        return (rgb.r <= 255) && (rgb.g <= 255) && (rgb.b <= 255);
+        return
+            (rgb.r >= 0 && rgb.r <= 255) &&
+            (rgb.g >= 0 && rgb.g <= 255) &&
+            (rgb.b >= 0 && rgb.b <= 255);
     }
 
+    // 주어진 문자열을 숫자로 변환
     static inline rgb_value _GetRgbValueFromString( const char* hex )
     {
         return (rgb_value)strtol( hex, NULL, 16 );
     }
 
+    // 숫자값을 16진수로 변환
     static inline string _UintToHex( const unsigned int value )
     {
         std::stringstream ss;
@@ -80,6 +92,7 @@ namespace cx // ConsoleX main namespace
         return ss.str();
     }
 
+    // cx::rgb_set 값을 HexCode 문자열로 변환
     static inline string _GetStrFromRGB( const cx::rgb_set rgb )
     {
         string res = "#";
@@ -89,6 +102,7 @@ namespace cx // ConsoleX main namespace
         return res;
     }
 
+    // HexCode 문자열을 개별 r,g,b 값으로 분해
     static inline cx::rgb_set _GetRgbValueFromHexString( const string& hex )
     {
         char r_word[3] = { hex[1], hex[2], '\0' };
@@ -147,7 +161,6 @@ namespace cx // ConsoleX main namespace
         , _hex      ( color.hex() )
         , _rgb      ( color.rgb() )
     {}
-
 
     cx::rgb_set cx::Color::rgb( void ) const noexcept
     {
