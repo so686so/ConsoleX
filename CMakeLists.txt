@@ -38,3 +38,7 @@ target_link_libraries(ItemApp PRIVATE cx_core Threads::Threads)
 # App 2: Drawing App (DrawApp)
 add_executable(DrawApp example/main_draw_app.cpp)
 target_link_libraries(DrawApp PRIVATE cx_core Threads::Threads)
+
+# App 3: Buffer Test (Flicker Test)
+add_executable(BufferTest example/main_buffer_test.cpp)
+target_link_libraries(BufferTest PRIVATE cx_core Threads::Threads)

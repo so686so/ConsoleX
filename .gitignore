@@ -5,5 +5,5 @@
 .vscode
 
 # TestApp 무시
-DrawApp
-ItemApp
+*App
+*Test
