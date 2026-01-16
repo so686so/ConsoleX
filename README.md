@@ -1,32 +1,34 @@
-
 # ConsoleX
 
-**ConsoleX**는 리눅스 터미널 환경에서 고성능 비동기 입력 처리와 UI 렌더링을 구현하기 위한 경량 C++ 라이브러리입니다.
+**ConsoleX**는 리눅스 터미널 환경에서 고성능 비동기 입력 처리와 모던한 TUI(Text-based User Interface)를 구현하기 위한 경량 C++ 라이브러리입니다.
 
-이 프로젝트에는 라이브러리의 기능을 시연하기 위한 **CLI 기반의 그림판 샘플 앱**(DrawApp)이 포함되어 있습니다.
+이 프로젝트에는 라이브러리의 강력한 기능을 시연하기 위해 **그림판(DrawApp)** 과 **윈도우 매니저 스타일의 인벤토리(ItemApp)**, 두 가지 예제 애플리케이션이 포함되어 있습니다.
 
-<p align="center"><img src="./asset/DrawAppSampleScreenShot.png"></p>
+<p align="center"><img src="./asset/DrawAppSampleScreenShot.png" alt="DrawApp Screenshot"></p>
 
 ## ✨ Key Features
 
 ### 🛠 Core Library (`cx_*`)
 
 * **비동기 입력 처리 (`cx_device`)**: `select()` 기반의 멀티플렉싱을 통해 키보드와 마우스 입력을 넌블로킹(Non-blocking)으로 처리합니다.
-* **고급 파싱 지원**: xterm, VT100, Tera Term 등 다양한 터미널의 이스케이프 시퀀스(F1~F12, Backspace 등)를 호환성 있게 처리합니다. **키보드 즉시 입력** 및 **마우스 클릭, 드래그 이벤트** 등을 모두 파싱 가능합니다.
+* **고급 파싱 지원**: xterm, VT100, Tera Term 등 다양한 터미널의 이스케이프 시퀀스(F1~F12, Backspace 등)를 호환성 있게 처리합니다. **키보드 즉시 입력** 및 **마우스 클릭, 드래그 이벤트** 등을 정밀하게 파싱합니다.
 * **RGB 트루컬러 지원 (`cx_color`)**: 24-bit RGB 색상을 지원하며, ANSI 코드로 자동 변환합니다.
-* **UTF-8 완벽 지원 (`cx_util`)**: 한글, 한자, 이모지(Emoji) 등의 Double-Width 문자와 결합 문자(ZWJ)의 너비를 정확하게 계산하여 깨짐 없는 UI를 제공합니다.
-* **플리커링 방지**: 라인 버퍼링 및 차집합 연산(Differential Update) 알고리즘을 통해 화면 깜빡임 없는 매끄러운 렌더링을 구현했습니다.
+* **UTF-8 완벽 지원 (`cx_util`)**: 한글, 한자, 이모지(Emoji) 등의 Double-Width 문자와 결합 문자(ZWJ)의 너비를 정확하게 계산하여 UI 깨짐을 방지합니다.
+* **최적화된 렌더링**: Double Buffering 및 Differential Rendering(차분 렌더링) 기법을 통해 화면 깜빡임(Flickering) 없는 부드러운 UI를 제공합니다.
 
-### 🎨 Demo Application: Notepad/DrawApp
+### 🎨 Demo Applications
 
-* **마우스 인터랙션**: 클릭 가능한 UI 메뉴, 드래그 드로잉을 지원합니다.
-* **도구 모드**:
-* **Brush**: 밀도 조절 및 랜덤 그라데이션 효과.
-* **Eraser**: 가변 크기 조절, 실시간 영역 하이라이트 및 트레이스 제거.
+#### 1. Drawing App (`DrawApp`)
 
+* **기능**: 터미널 상에서 마우스 드래그를 이용한 자유 곡선 그리기.
+* **도구**: 브러시(밀도/그라데이션 조절), 지우개(가변 크기/하이라이트), 실시간 헥사 컬러 입력.
 
-* **실시간 색상 입력**: F4 키를 통해 Hex Code(#RRGGBB)를 실시간으로 입력하고 미리볼 수 있습니다.
-* **반응형 UI**: 터미널 리사이즈 이벤트에 대응하며, 상단 메뉴와 하단 로그창을 분리하여 정보를 표시합니다.
+#### 2. Inventory Manager (`ItemApp`)
+
+* **기능**: 윈도우 매니저 스타일의 인벤토리 관리 시스템.
+* **윈도우 관리**: 인벤토리 창 이동(Move), 크기 조절(Resize), 충돌 감지 및 자동 회피.
+* **아이템 관리**: 마우스 드래그 앤 드롭을 통한 인벤토리 간 아이템 이동.
+* **레이아웃 모드**: F1(최대화/타일링) 및 F2(원상 복구) 모드 지원.
 
 ---
 
@@ -34,18 +36,20 @@
 
 ```bash
 ConsoleX/
-├── include/
-│   ├── ConsoleX.hpp   # 모든 ConsoleX 헤더 통합본
-│   ├── cx_color.hpp   # RGB 색상 데이터 및 ANSI 변환
-│   ├── cx_device.hpp  # 터미널 입력 제어 (Mouse/Key Parser)
-│   ├── cx_screen.hpp  # 커서 이동, 화면 클리어, 해상도 조회
-│   └── cx_util.hpp    # UTF-8 문자열 너비 계산 유틸리티
-├── src/
+├── example/           # 예제 애플리케이션 소스
+│   ├── main_draw_app.cpp  # 그림판 앱
+│   └── main_item_app.cpp  # 인벤토리 앱
+├── include/           # 라이브러리 헤더 파일
+│   ├── ConsoleX.hpp   # 통합 헤더
+│   ├── cx_color.hpp   # 색상 처리
+│   ├── cx_device.hpp  # 입력 파싱
+│   ├── cx_screen.hpp  # 화면 제어
+│   └── cx_util.hpp    # 문자열 유틸리티
+├── src/               # 코어 라이브러리 구현부
 │   ├── cx_color.cpp
 │   ├── cx_device.cpp
 │   ├── cx_screen.cpp
-│   ├── cx_util.cpp
-│   └── main.cpp       # DrawApp 애플리케이션 구현부
+│   └── cx_util.cpp
 └── CMakeLists.txt     # 빌드 설정
 
 ```
@@ -70,61 +74,60 @@ cd ConsoleX
 # 2. 빌드 디렉토리 생성 및 컴파일
 mkdir build && cd build
 cmake ..
-make
+make -j4
 
-# 3. 실행
-./ConsoleX
+# 3. 실행 (프로젝트 루트 디렉토리에 실행 파일 생성됨)
+cd ..
+./DrawApp   # 그림판 앱 실행
+./ItemApp   # 인벤토리 앱 실행
 
 ```
 
 ---
 
-## 🎮 User Manual (DrawApp)
+## 🎮 User Manual
 
-프로그램 실행 시 마우스를 활성화해야 하며, 터미널이 **xterm-256color** 모드인지 확인하는 것이 좋습니다.
+### 1. Drawing App (`DrawApp`)
 
-### ⌨️ Keyboard Controls
-
-| Key | Function | Description |
+| Key / Action | Function | Description |
 | --- | --- | --- |
 | **F1** | **Brush Mode** | 브러시 모드로 전환합니다. |
 | **F2** | **Eraser Mode** | 지우개 모드로 전환합니다. |
 | **F3** | **Gradient** | 그라데이션 효과를 ON/OFF 토글합니다. |
 | **F4** | **Color Input** | Hex Code 색상 입력 모드로 진입합니다. |
+| **+ / -** | **Control** | 브러시 밀도를 조절하거나 지우개 크기를 변경합니다. |
+| **L-Click Drag** | **Draw** | 그림을 그리거나 지웁니다. |
+| **M-Click** | **Clear** | 화면 전체를 지웁니다. |
+
+### 2. Inventory App (`ItemApp`)
+
+| Key / Action | Function | Description |
+| --- | --- | --- |
+| **F1** | **Maximize** | 모든 인벤토리 창을 화면에 꽉 차게 정렬(Tiling)합니다. |
+| **F2** | **Restore** | 인벤토리 창을 원래 위치와 크기로 복구합니다. |
 | **Q** | **Quit** | 프로그램을 종료합니다. |
-| **+ / 2** | **Density/Size Up** | 브러시 밀도를 높이거나 지우개 크기를 키웁니다. |
-| **- / 1** | **Density/Size Down** | 브러시 밀도를 낮추거나 지우개 크기를 줄입니다. |
-| **ESC** | **Cancel** | 색상 입력 모드를 취소합니다. |
-
-### 🖱️ Mouse Controls
-
-| Action | Function |
-| --- | --- |
-| **Left Click (Menu)** | 상단 메뉴바의 텍스트(`[F1]`, `[Q]` 등)를 클릭하여 해당 기능을 실행합니다. |
-| **Left Drag (Screen)** | 화면에 그림을 그리거나 지웁니다. |
-| **Middle Click** | 화면 전체를 깨끗하게 지웁니다 (Clear). |
+| **Drag Header** | **Move Window** | 인벤토리 상단 바(`[-]`)를 잡고 창을 이동합니다. |
+| **Click Header** | **Sort Items** | 상단 바를 클릭(이동 없이)하면 아이템을 이름순 정렬합니다. |
+| **Drag Edge** | **Resize** | 인벤토리 우측/하단 모서리를 잡고 크기를 조절합니다. |
+| **Drag Item** | **Move Item** | 아이템을 드래그하여 다른 인벤토리로 이동시킵니다. (녹색 테두리: 이동 가능) |
 
 ---
 
 ## 🔧 Technical Details
 
-### 1. Flicker-Free Rendering
+### 1. Double Buffering & Differential Rendering (`ItemApp`)
 
-기존의 `clear()` 후 전체를 다시 그리는 방식 대신, **Line Buffering** 기법을 사용합니다. 변경이 필요한 라인만 커서를 이동하여 덮어쓰고, 빈 공간은 공백 문자로 패딩(Padding) 처리하여 화면 깜빡임을 원천 차단했습니다.
+`ItemApp`은 화면 전체를 매 프레임 지우고 다시 그리는 대신, **가상 버퍼(Virtual Buffer)** 시스템을 사용합니다.
 
-### 2. Differential Update (Eraser)
+* **Front/Back Buffer**: 현재 화면과 다음 화면을 메모리에 유지합니다.
+* **Diff Algorithm**: 두 버퍼를 비교하여 **변경된 문자(Cell)**만 선별적으로 터미널에 전송합니다.
+* **Optimization**: 커서 이동 명령을 최소화하고 색상 변경 코드를 최적화하여, 복잡한 UI 갱신 시에도 깜빡임 없는(Flicker-free) 화면을 제공합니다.
 
-지우개 동작 시, 이전 프레임의 영역을 모두 지우고 새 영역을 그리는 대신, **차집합 연산**을 수행합니다.
+### 2. Window Management Logic
 
-* `Old - New`: 지워야 할 영역 (검은색)
-* `New - Old`: 새로 그려야 할 영역 (회색 하이라이트)
-* `Intersection`: 유지 (연산 없음)
-이를 통해 I/O 부하를 줄이고 시각적 노이즈를 제거했습니다.
-
-### 3. Terminal Compatibility
-
-* **Tera Term**: Backspace(`^H`, ASCII 8)와 F1~F4(`CSI` vs `SS3`) 키 시퀀스 호환성 코드가 적용되어 있습니다.
-* **UTF-8**: `cx::Util`은 바이트 단위가 아닌 유니코드 코드포인트 단위로 문자를 분석하여, 한글이 2칸을 차지함을 정확히 인식합니다.
+* **Clamping**: 윈도우 이동 시 화면 밖으로 벗어나지 않도록 좌표를 자동 보정합니다.
+* **Collision Detection**: 윈도우 간 겹침을 감지하여 붉은 테두리로 경고하고, 드롭 시 빈 공간(좌상단 우선)을 찾아 자동으로 배치합니다.
+* **Elastic Resizing**: 리사이즈 중에는 자유롭게 크기를 조절하다가, 마우스를 놓으면 내용물(아이템 목록) 크기에 맞춰 자동으로 높이가 스냅(Snap)됩니다.
 
 ---
 
