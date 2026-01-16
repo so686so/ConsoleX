@@ -1,21 +1,20 @@
-
 # ConsoleX
 
 **ConsoleX**는 리눅스 터미널 환경에서 고성능 비동기 입력 처리와 모던한 TUI(Text-based User Interface)를 구현하기 위한 경량 C++ 라이브러리입니다.
 
-이 프로젝트에는 라이브러리의 강력한 렌더링 성능과 입력 처리 기능을 시연하기 위해 **그림판(DrawApp)** 과 **윈도우 매니저 스타일의 인벤토리(ItemApp)**, 두 가지 예제 애플리케이션이 포함되어 있습니다.
+이 프로젝트에는 라이브러리의 강력한 렌더링 성능과 입력 처리 기능을 시연하기 위해 **그림판(DrawApp)**, **윈도우 매니저(ItemApp)**, 그리고 **성능 테스트(BufferTest)** 예제 애플리케이션이 포함되어 있습니다.
 
 <p align="center"><img src="./asset/DrawAppSampleScreenShot.png" alt="DrawApp Screenshot"></p>
 
 ## ✨ Key Features
 
-### 🛠 Core Library (`cx_*`)
+### 🛠 Core Library (`cx::*`)
 
-* **고성능 렌더링 엔진 (`cx_buffer`)**: **Double Buffering** 및 **Differential Rendering(차분 렌더링)** 기법을 내장했습니다. 화면 전체를 지우지 않고 변경된 픽셀만 선별적으로 업데이트하여, 복잡한 UI에서도 **플리커링(Flickering) 없는 부드러운 화면**을 제공합니다.
-* **비동기 입력 처리 (`cx_device`)**: `select()` 기반의 멀티플렉싱을 통해 키보드와 마우스 입력을 넌블로킹(Non-blocking)으로 처리합니다.
+* **고성능 렌더링 엔진 (`cx::Buffer`)**: **Double Buffering** 및 **Differential Rendering(차분 렌더링)** 기법을 내장했습니다. 화면 전체를 지우지 않고 변경된 픽셀만 선별적으로 업데이트하여, 복잡한 UI에서도 **플리커링(Flickering) 없는 부드러운 화면**을 제공합니다.
+* **비동기 입력 처리 (`cx::Device`)**: `select()` 기반의 멀티플렉싱을 통해 키보드와 마우스 입력을 넌블로킹(Non-blocking)으로 처리합니다.
 * **고급 파싱 지원**: xterm, VT100, Tera Term 등 다양한 터미널의 이스케이프 시퀀스(F1~F12, Backspace 등)를 호환성 있게 처리합니다. **키보드 즉시 입력** 및 **마우스 클릭, 드래그 이벤트** 등을 정밀하게 파싱합니다.
-* **RGB 트루컬러 지원 (`cx_color`)**: 24-bit RGB 색상을 지원하며, ANSI 코드로 자동 변환합니다.
-* **UTF-8 완벽 지원 (`cx_util`)**: 한글, 한자, 이모지(Emoji) 등의 Double-Width 문자와 결합 문자(ZWJ)의 너비를 정확하게 계산하여 UI 깨짐을 방지합니다.
+* **RGB 트루컬러 지원 (`cx::Color`)**: 24-bit RGB 색상을 지원하며, ANSI 코드로 자동 변환합니다.
+* **UTF-8 지원**: 한글, 한자, 이모지(Emoji) 등의 Double-Width 문자와 결합 문자(ZWJ)의 너비를 정확하게 계산하여 UI 깨짐을 방지합니다.
 
 ### 🎨 Demo Applications
 
@@ -36,6 +35,10 @@
     * **Sort**: 상단 바 클릭 시 아이템 이름순 정렬.
 * **레이아웃**: F1(최대화/타일링) 및 F2(원상 복구) 모드 지원.
 
+#### 3. Performance Test (`BufferTest`)
+* **기능**: 고속 렌더링 시 화면 깜빡임 여부를 검증하기 위한 벤치마크 툴.
+* **테스트 항목**: 고정된 배경 패턴 위에서 빠르게 움직이는 객체를 렌더링하여 **Tearing(찢어짐)** 이나 **Flickering(깜빡임)** 현상이 없음을 시각적으로 검증.
+
 ---
 
 ## 📂 Project Structure
@@ -43,8 +46,9 @@
 ```bash
 ConsoleX/
 ├── example/           # 예제 애플리케이션 소스
-│   ├── main_draw_app.cpp  # 그림판 앱 (cx::Buffer 적용됨)
-│   └── main_item_app.cpp  # 인벤토리 앱 (Window Manager Demo)
+│   ├── main_buffer_test.cpp # 버퍼 성능 테스트
+│   ├── main_draw_app.cpp    # 그림판 앱
+│   └── main_item_app.cpp    # 인벤토리 앱
 ├── include/           # 라이브러리 헤더 파일
 │   ├── ConsoleX.hpp   # 통합 헤더
 │   ├── cx_buffer.hpp  # 더블 버퍼링 엔진
@@ -76,7 +80,7 @@ ConsoleX/
 
 ```bash
 # 1. 프로젝트 클론
-git clone [https://github.com/so686so/ConsoleX.git](https://github.com/so686so/ConsoleX.git)
+git clone https://github.com/so686so/ConsoleX.git
 cd ConsoleX
 
 # 2. 빌드 디렉토리 생성 및 컴파일
@@ -86,8 +90,9 @@ make -j4
 
 # 3. 실행 (프로젝트 루트 디렉토리에 실행 파일 생성됨)
 cd ..
-./DrawApp   # 그림판 앱 실행
-./ItemApp   # 인벤토리 앱 실행
+./DrawApp     # 그림판 앱 실행
+./ItemApp     # 인벤토리 앱 실행
+./BufferTest  # 플리커링 테스트 실행
 
 ```
 
