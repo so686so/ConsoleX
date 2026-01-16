@@ -1,7 +1,4 @@
-#include "../include/cx_device.hpp"
-#include "../include/cx_screen.hpp"
-#include "../include/cx_color.hpp"
-#include "../include/cx_util.hpp"
+#include "ConsoleX.hpp"
 
 #include <iostream>
 #include <vector>
@@ -13,184 +10,6 @@
 #include <functional>
 
 using namespace std::chrono_literals;
-
-// =============================================================================
-// [Optimized Rendering Engine]
-// =============================================================================
-
-struct Cell {
-    std::string ch = " ";
-    cx::Color fg = cx::Color::White;
-    cx::Color bg = cx::Color::Black;
-    bool is_wide_trail = false;
-
-    bool operator!=(const Cell& other) const {
-        return ch != other.ch || fg != other.fg || bg != other.bg;
-    }
-};
-
-class VirtualBuffer {
-    int width_ = 0;
-    int height_ = 0;
-    std::vector<std::vector<Cell>> front_buffer_;
-    std::vector<std::vector<Cell>> back_buffer_;
-
-public:
-    void Resize(int w, int h) {
-        if (width_ == w && height_ == h) return;
-        width_ = w;
-        height_ = h;
-        front_buffer_.assign(h, std::vector<Cell>(w));
-        back_buffer_.assign(h, std::vector<Cell>(w));
-        ClearBuffer(front_buffer_, cx::Color::Black);
-    }
-
-    void Clear(const cx::Color& bg_color = cx::Color::Black) {
-        ClearBuffer(back_buffer_, bg_color);
-    }
-
-    void DrawString(int x, int y, const std::string& text, const cx::Color& fg, const cx::Color& bg) {
-        if (y < 0 || y >= height_) return;
-
-        int cursor_x = x;
-        size_t i = 0;
-        size_t len = text.length();
-
-        while (i < len && cursor_x < width_) {
-            int char_len = 1;
-            unsigned char c = (unsigned char)text[i];
-            if      (c < 0x80) char_len = 1;
-            else if ((c & 0xE0) == 0xC0) char_len = 2;
-            else if ((c & 0xF0) == 0xE0) char_len = 3;
-            else if ((c & 0xF8) == 0xF0) char_len = 4;
-
-            std::string ch = text.substr(i, char_len);
-            int visual_width = (int)cx::Util::GetStringWidth(ch);
-
-            if (cursor_x >= 0 && cursor_x < width_) {
-                auto& cell = back_buffer_[y][cursor_x];
-                cell.ch = ch;
-                cell.fg = fg;
-                cell.bg = bg;
-                cell.is_wide_trail = false;
-
-                if (visual_width == 2 && cursor_x + 1 < width_) {
-                    auto& trail = back_buffer_[y][cursor_x + 1];
-                    trail.ch = "";
-                    trail.fg = fg;
-                    trail.bg = bg;
-                    trail.is_wide_trail = true;
-                }
-            }
-            cursor_x += visual_width;
-            i += char_len;
-        }
-    }
-
-    void DrawBox(int x, int y, int w, int h, const cx::Color& fg, const cx::Color& bg, bool red_border = false) {
-        cx::Color border_c = red_border ? cx::Color::Red : fg;
-        DrawString(x, y, "┏", border_c, bg);
-        DrawString(x + w - 1, y, "┓", border_c, bg);
-        DrawString(x, y + h - 1, "┗", border_c, bg);
-        DrawString(x + w - 1, y + h - 1, "┛", border_c, bg);
-
-        for(int i = x + 1; i < x + w - 1; ++i) {
-            DrawString(i, y, "━", border_c, bg);
-            DrawString(i, y + h - 1, "━", border_c, bg);
-        }
-        for(int i = y + 1; i < y + h - 1; ++i) {
-            DrawString(x, i, "┃", border_c, bg);
-            DrawString(x + w - 1, i, "┃", border_c, bg);
-        }
-        for(int j = y + 1; j < y + h - 1; ++j) {
-             for(int i = x + 1; i < x + w - 1; ++i) {
-                DrawString(i, j, " ", fg, bg);
-            }
-        }
-    }
-
-    void Flush() {
-        std::stringstream ss; // 출력을 모아서 한 번에 보내기 위한 스트림
-
-        // 이전에 설정된 색상을 기억하여, 중복된 색상 변경 코드를 방지 (최적화)
-        cx::Color last_fg = cx::Color::White;
-        cx::Color last_bg = cx::Color::Black;
-
-        // 실제 터미널 커서가 현재 어디에 있는지 추적 (커서 이동 명령 최소화)
-        int term_cursor_y = -1;
-        int term_cursor_x = -1;
-        bool color_set = false;
-
-        // 화면 전체 순회 (Height x Width)
-        for (int y = 0; y < height_; ++y) {
-            for (int x = 0; x < width_; ++x) {
-                Cell& back = back_buffer_[y][x];   // 이번 프레임에 그릴 내용
-                Cell& front = front_buffer_[y][x]; // 이전 프레임에 그려진 내용
-
-                // [핵심 1] 변경 감지 (Differential Update)
-                // 이전 화면과 글자, 글자색, 배경색이 모두 같다면 아무것도 하지 않고 넘어감(Skip)
-                // -> 이 로직 덕분에 화면 갱신량이 99% 이상 줄어들어 깜빡임이 사라짐
-                if (!(back != front)) continue;
-
-                // 2칸짜리 문자(한글 등)의 뒷부분은 렌더링하지 않음 (앞부분 그릴 때 같이 그려짐)
-                if (back.is_wide_trail) {
-                    front = back; // 상태만 동기화
-                    continue;
-                }
-
-                // [핵심 2] 커서 이동 최적화
-                // 터미널 커서는 글자를 쓰면 자동으로 오른쪽으로 이동함.
-                // 따라서, 방금 쓴 글자의 바로 옆에 쓸 때는 커서 이동 명령(\033[y;xH)을 생략함.
-                // 연속되지 않은 위치(줄바꿈이나 건너뜀)일 때만 이동 명령 전송.
-                int target_y = y + 1;
-                int target_x = x + 1;
-
-                if (term_cursor_y != target_y || term_cursor_x != target_x) {
-                    ss << "\033[" << target_y << ";" << target_x << "H"; // ANSI 커서 이동
-                    term_cursor_y = target_y;
-                    term_cursor_x = target_x;
-                }
-
-                // [핵심 3] 색상 변경 최적화
-                // 글자색이나 배경색이 이전과 다를 때만 변경 코드 전송
-                if (!color_set || back.fg != last_fg) {
-                    ss << back.fg.ToAnsiForeground();
-                    last_fg = back.fg;
-                }
-                if (!color_set || back.bg != last_bg) {
-                    ss << back.bg.ToAnsiBackground();
-                    last_bg = back.bg;
-                }
-                color_set = true;
-
-                // [핵심 4] 실제 문자 출력 및 상태 동기화
-                ss << back.ch;  // 문자열 버퍼에 추가
-                front = back;   // Front Buffer(현재 화면)를 최신 상태로 업데이트
-
-                // 다음 예상 커서 위치 계산 (한글이면 x좌표가 2칸 이동)
-                int width_step = (int)cx::Util::GetStringWidth(back.ch);
-                term_cursor_x += width_step;
-            }
-        }
-
-        // [핵심 5] 모아둔 변경 사항을 한 번에 출력 (I/O 호출 횟수 최소화)
-        if (ss.rdbuf()->in_avail() > 0) {
-            std::cout << ss.str() << std::flush;
-        }
-    }
-
-private:
-    void ClearBuffer(std::vector<std::vector<Cell>>& buf, const cx::Color& bg) {
-        for(auto& row : buf) {
-            for(auto& cell : row) {
-                cell.ch = " ";
-                cell.fg = cx::Color::White;
-                cell.bg = bg;
-                cell.is_wide_trail = false;
-            }
-        }
-    }
-};
 
 // =============================================================================
 // [Main App Logic]
@@ -248,7 +67,7 @@ public:
         return res + "..";
     }
 
-    void DrawToBuffer(VirtualBuffer& buffer) {
+    void DrawToBuffer(cx::Buffer& buffer) {
         cx::Color fg_c = cx::Color::White;
         if (is_red_border) fg_c = cx::Color::Red;
         else if (is_green_border) fg_c = cx::Color::Green;
@@ -310,7 +129,7 @@ class InventoryApp {
     ViewMode view_mode = ViewMode::NORMAL;
 
     std::vector<Inventory> inventories;
-    VirtualBuffer screen_buffer;
+    cx::Buffer screen_buffer;
 
     DragMode drag_mode = DragMode::NONE;
     int drag_target_idx = -1;
@@ -351,7 +170,10 @@ public:
 
     void Run() {
         cx::Device::EnableMouse(true);
-        cx::Screen::Clear();
+
+        cx::Screen::SetBackColor(cx::Color::Black); // 배경색을 검정으로 설정
+        cx::Screen::Clear();                        // 해당 배경색으로 화면 전체 지우기
+        std::cout << std::flush;                    // 즉시 반영
 
         while(is_running) {
             if(auto input = cx::Device::GetInput(10ms); input) {
@@ -590,7 +412,7 @@ private:
         }
     }
 
-    void DrawTopBar(VirtualBuffer& buffer) {
+    void DrawTopBar(cx::Buffer& buffer) {
         menus.clear();
         cx::Color bg = cx::Color::Blue; cx::Color fg = cx::Color::White;
         auto size = cx::Screen::GetSize();
@@ -610,7 +432,7 @@ private:
         AddMenu("[F2] Restore", [&](){ if(view_mode==ViewMode::MAXIMIZED) { RestoreLayout(); view_mode=ViewMode::NORMAL; }});
     }
 
-    void DrawBottomLog(VirtualBuffer& buffer) {
+    void DrawBottomLog(cx::Buffer& buffer) {
         auto size = cx::Screen::GetSize();
         int y = size.rows - 1;
         cx::Color bg = cx::Color(40,40,40); cx::Color fg = cx::Color::White;

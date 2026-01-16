@@ -8,3 +8,4 @@
 #include "cx_screen.hpp"
 #include "cx_device.hpp"
 #include "cx_util.hpp"
+#include "cx_buffer.hpp"

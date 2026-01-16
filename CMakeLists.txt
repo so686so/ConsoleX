@@ -20,6 +20,7 @@ add_library(cx_core STATIC
     src/cx_device.cpp
     src/cx_screen.cpp
     src/cx_util.cpp
+    src/cx_buffer.cpp
 )
 
 # 헤더 파일 경로 포함 (모든 타겟이 include 폴더를 참조하게 함)

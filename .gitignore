@@ -3,3 +3,7 @@
 
 # VSCode 관련 세팅 파일 무시
 .vscode
+
+# TestApp 무시
+DrawApp
+ItemApp
