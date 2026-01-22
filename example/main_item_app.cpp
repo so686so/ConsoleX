@@ -264,7 +264,7 @@ private:
 
     void ProcessInput(const cx::Device::Event& ev) {
         if(ev.code == cx::DeviceInputCode::MOUSE_EVENT) {
-            mouse_cursor = { ev.mouse.x - 1, ev.mouse.y - 1 };
+            mouse_cursor = { ev.mouse.x, ev.mouse.y };
         }
 
         if(ev.code == cx::DeviceInputCode::q) { is_running = false; return; }

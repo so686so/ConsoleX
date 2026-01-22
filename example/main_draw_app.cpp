@@ -217,7 +217,7 @@ private:
     {
         // 0. 마우스 좌표 동기화 (1-based -> 0-based)
         if (event.code == cx::DeviceInputCode::MOUSE_EVENT) {
-            mouse_cursor_ = { event.mouse.x - 1, event.mouse.y - 1 };
+            mouse_cursor_ = { event.mouse.x, event.mouse.y };
         }
 
         // 1. F4 Color Input Mode

@@ -617,8 +617,9 @@ namespace cx
                             }
                             catch(...) { return { DeviceInputCode::NONE, seq_len }; }
 
-                            last_cursor_pos_.x = c;
-                            last_cursor_pos_.y = r;
+                            // ANSI(1-based) -> User(0-based) 변환
+                            last_cursor_pos_.x = c - 1;
+                            last_cursor_pos_.y = r - 1;
 
                             return { DeviceInputCode::CURSOR_EVENT, seq_len };
                         }
@@ -752,8 +753,8 @@ namespace cx
         }
 
         int raw_btn         = param[0];
-        last_mouse_state_.x = param[1];
-        last_mouse_state_.y = param[2];
+        last_mouse_state_.x = param[1] - 1; // ANSI(1-based) -> User(0-based) 변환
+        last_mouse_state_.y = param[2] - 1; // ANSI(1-based) -> User(0-based) 변환
 
         // 'm': Release, 'M': Press/Drag
         char last_char = buf[m_pos];

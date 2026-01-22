@@ -14,7 +14,7 @@ namespace cx
 
     // Static Constants Definition
     const Coord Coord::Zero   = { 0, 0 };
-    const Coord Coord::Origin = { 1, 1 };
+    const Coord Coord::Origin = { 0, 0 };
 
     std::string Coord::ToString( void ) const
     {
@@ -54,9 +54,10 @@ namespace cx
         int max_w = ( size.cols > 0 ) ? size.cols : 999;
         int max_h = ( size.rows > 0 ) ? size.rows : 999;
 
+        // 0 부터 (길이 - 1) 까지로 제한
         return Coord {
-            std::clamp( pos.x, 1, max_w ),
-            std::clamp( pos.y, 1, max_h )
+            std::clamp( pos.x, 0, max_w - 1 ),
+            std::clamp( pos.y, 0, max_h - 1 )
         };
     }
 
@@ -69,9 +70,9 @@ namespace cx
         // 화면 밖으로 커서가 나가는 것을 방지하기 위해 좌표 보정
         Coord safe_pos = ClampToTerminal( pos );
 
-        // ANSI Escape Code: \033[<row>;<col>H
-        // 주의: ANSI는 (Row, Col) 순서이고, cx::Coord는 (x, y) = (Col, Row) 순서임
-        std::cout << "\033[" << safe_pos.y << ";" << safe_pos.x << "H" << std::flush;
+        // 핵심: User(0-based) -> ANSI(1-based) 변환
+        // \033[<Row>;<Col>H
+        std::cout << "\033[" << safe_pos.y + 1 << ";" << safe_pos.x + 1 << "H" << std::flush;
 
         return true;
     }

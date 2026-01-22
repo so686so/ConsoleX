@@ -35,8 +35,8 @@ namespace cx
 
         // --- Utilities ---
 
-        /// @brief 좌표가 유효한지 확인 (1 이상이어야 함)
-        constexpr bool IsValid( void ) const noexcept { return x > 0 && y > 0; }
+        /// @brief 좌표가 유효한지 확인 (0 이상이어야 함)
+        constexpr bool IsValid( void ) const noexcept { return x >= 0 && y >= 0; }
 
         /// @brief 디버깅용 문자열 반환 "(x, y)"
         std::string ToString( void ) const;

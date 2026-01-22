@@ -12,8 +12,12 @@ int main()
 {
     // 1. 초기 설정
     cx::Device::EnableMouse(false); // 마우스 불필요
-    cx::Screen::Clear();            // 초기 화면 클리어
-    cx::Buffer buffer;              // 가상 버퍼 생성
+
+    cx::Screen::SetBackColor(cx::Color::Black); // 배경색을 검정으로 설정
+    cx::Screen::Clear();                        // 해당 배경색으로 화면 전체 지우기
+    std::cout << std::flush;                    // 즉시 반영
+
+    cx::Buffer buffer; // 가상 버퍼 생성
 
     int x = 2, y = 2;
     int dx = 1, dy = 1;
@@ -51,8 +55,8 @@ int main()
         y += dy;
 
         // 경계 체크
-        if (x <= 1 || x >= size.cols - 24) dx = -dx;
-        if (y <= 1 || y >= size.rows - 12)  dy = -dy;
+        if (x <= 0 || x >= size.cols - 24) dx = -dx;
+        if (y <= 0 || y >= size.rows - 12)  dy = -dy;
 
         // 4. 박스 그리기 (색상 애니메이션 포함)
         // 매 프레임 색상이 변하는 박스
