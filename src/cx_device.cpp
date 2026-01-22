@@ -363,9 +363,19 @@ namespace cx
             if( activity < 0 && errno != EINTR )
                 return std::nullopt;
 
-            // 타임아웃 발생
+            // 타임아웃 발생 [ESC 지연 해결 패치]
             if( activity == 0 )
+            {
+                // 버퍼에 ESC(27) 하나만 남아있고 타임아웃이 발생했다면,
+                // 이는 시퀀스(화살표 키 등)를 기다리는 중이 아니라 단독 ESC 키 입력입니다.
+                if( input_buf_.length() == 1 && input_buf_[0] == 27 )
+                {
+                    input_buf_.clear();
+                    return DeviceInputCode::ESC;
+                }
+
                 return std::nullopt;
+            }
 
             // D. Read Data
             bool data_read = false;
